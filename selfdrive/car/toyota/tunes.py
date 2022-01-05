@@ -31,13 +31,15 @@ class LatTunes(Enum):
 
 ###### LONG ######
 def set_long_tune(tune, name):
-  # Improved longitudinal tune
-  # Reduved tune.kpV = [1.3, 1.0, 0.7]
+  # New Tune attempt
+  # Added 1.25, 2.5 BP's (~3mph, ~5.5mph)
+  # Added 1.1, 1.3 for new BP's
+  # Reduced 0 BP to .9
   if name == LongTunes.TSS2 or name == LongTunes.PEDAL:
     tune.deadzoneBP = [0., 8.05]
     tune.deadzoneV = [.0, .14]
-    tune.kpBP = [0., 5., 20.]
-    tune.kpV = [1.1, 1.0, 0.7]
+    tune.kpBP = [0., 1.25, 2.5, 5., 20.]
+    tune.kpV = [.9, 1.1, 1.3, 1.0, 0.7]
     tune.kiBP = [0., 5., 12., 20., 27.]
     tune.kiV = [.35, .23, .20, .17, .1]
   # Default longitudinal tune
