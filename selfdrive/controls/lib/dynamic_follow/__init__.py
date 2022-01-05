@@ -344,4 +344,4 @@ class DynamicFollow:
 
     self.min_TR = self.op_params.get('min_TR')
     if self.min_TR != 1.:
-      self.min_TR = clip(self.min_TR, 0.85, 2.7)
+      self.min_TR = clip(self.min_TR, 0.65, 2.7)
