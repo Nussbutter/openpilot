@@ -59,6 +59,8 @@ void OnroadWindow::updateState(const UIState &s) {
   if (s.sm->updated("controlsState") || !alert.equal({})) {
     if (alert.type == "controlsUnresponsive") {
       bgColor = bg_colors[STATUS_ALERT];
+    } else if (alert.type == "controlsUnresponsivePermanent") {
+      bgColor = bg_colors[STATUS_DISENGAGED];
     }
     alerts->updateAlert(alert, bgColor);
   }
@@ -428,7 +430,7 @@ void NvgWindow::drawLaneLines(QPainter &painter, UIState *s) {
     const cereal::ModelDataV2::XYZTData::Reader &pos = (*s->sm)["modelV2"].getModelV2().getPosition();
     const float lat_pos = pos.getY().size() > 0 ? std::abs(pos.getY()[14] - pos.getY()[0]) : 0;  // 14 is 1.91406 (subtract initial pos to not consider offset)
     float hue = lat_pos * -39.46 + 148;  // interp from {0, 4.5} -> {148, 0}
-    hue = fmod(hue, 360.0) / 360.0;  // scale and wrap around
+    hue = (hue - 360. * floor(hue / 360.)) / 360.;  // scale and wrap around
     bg.setColorAt(0, QColor::fromHslF(hue, .94, .51, 1.));
     bg.setColorAt(1, QColor::fromHslF(hue, .73, .49, 100./255.));
   } else {
