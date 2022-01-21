@@ -48,12 +48,15 @@ N = 12
 MAX_T = 10.0
 T_IDXS_LST = [index_function(idx, max_val=MAX_T, max_idx=N+1) for idx in range(N+1)]
 
+#STOP_DISTANCE is how far away you'll come to a stop (6 is way to far, 3 is a bit close)
+#T_FOLLOW is follow distance, relates to shanes distance profiles and tunes.py
+#COMFORT_BRAKE ??Brake room, could be used to smoothen brakeing??
 T_IDXS = np.array(T_IDXS_LST)
 T_DIFFS = np.diff(T_IDXS, prepend=[0.])
 MIN_ACCEL = -3.5
 T_FOLLOW = 1.45
 COMFORT_BRAKE = 2.5
-STOP_DISTANCE = 3
+STOP_DISTANCE = 3.5
 
 def get_stopped_equivalence_factor(v_lead):
   return (v_lead**2) / (2 * COMFORT_BRAKE)
