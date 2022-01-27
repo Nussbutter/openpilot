@@ -78,7 +78,7 @@ def get_safe_obstacle_distance(v_ego, t_follow=T_FOLLOW):
   return (v_ego**2) / (2 * COMFORT_BRAKE) + t_follow * v_ego + STOP_DISTANCE
 
 def desired_follow_distance(v_ego, v_lead, t_follow=T_FOLLOW):
-  return get_safe_obstacle_distance(v_ego, t_follow) - get_stopped_equivalence_factor(v_lead)
+  return get_safe_obstacle_distance(v_ego, t_follow) - get_stopped_equivalence_factor(v_lead, v_ego)
 
 
 def gen_long_model():
@@ -217,9 +217,6 @@ class LongitudinalMpc:
     self.desired_TR = desired_TR
     self.v_ego = 0.
     self.reset()
-    self.accel_limit_arr = np.zeros((N+1, 2))
-    self.accel_limit_arr[:,0] = -1.2
-    self.accel_limit_arr[:,1] = 1.2
     self.source = SOURCES[2]
 
   def reset(self):
@@ -247,6 +244,10 @@ class LongitudinalMpc:
   def set_weights(self):
     if self.e2e:
       self.set_weights_for_xva_policy()
+      self.params[:,0] = -10.	
+      self.params[:,1] = 10.	
+      self.params[:,2] = 1e5	
+      self.params[:,4] = T_FOLLOW
     else:
       self.set_weights_for_lead_policy()
 
@@ -264,8 +265,7 @@ class LongitudinalMpc:
     W = np.asfortranarray(np.diag([X_EGO_OBSTACLE_COST * x_ego_obstacle_cost_multiplier,
                                    X_EGO_COST, V_EGO_COST, A_EGO_COST,
                                    A_CHANGE_COST * accel_cost_multiplier,
-                                   J_EGO_COST * accel_cost_multiplier]))
-    
+                                   J_EGO_COST * accel_cost_multiplier]))    
     for i in range(N):
       W[4,4] = A_CHANGE_COST * np.interp(T_IDXS[i], [0.0, 1.0, 2.0], [1.0, 1.0, 0.0]) * accel_cost_multiplier
       self.solver.cost_set(i, 'W', W)
@@ -363,8 +363,8 @@ class LongitudinalMpc:
     # To estimate a safe distance from a moving lead, we calculate how much stopping
     # distance that lead needs as a minimum. We can add that to the current distance
     # and then treat that as a stopped car/obstacle at this new distance.
-    lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1])
-    lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
+    lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1], self.x_sol[:,1])	
+    lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1], self.x_sol[:,1])
 
     # Fake an obstacle for cruise, this ensures smooth acceleration to set speed
     # when the leads are no factor.
@@ -398,14 +398,7 @@ class LongitudinalMpc:
     for i in range(N):
       self.solver.cost_set(i, "yref", self.yref[i])
     self.solver.cost_set(N, "yref", self.yref[N][:COST_E_DIM])
-    self.accel_limit_arr[:,0] = -10.
-    self.accel_limit_arr[:,1] = 10.
-    desired_TR = T_FOLLOW*np.ones((N+1))
-    x_obstacle = 1e5*np.ones(N+1)
-    self.params = np.concatenate([self.accel_limit_arr,
-                                  x_obstacle[:, None],
-                                  self.prev_a[:,None],
-                                  desired_TR[:,None]], axis=1)
+    self.params[:,3] = np.copy(self.prev_a)
     self.run()
 
 
