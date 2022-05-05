@@ -42,9 +42,13 @@ class CarController():
       pedal_offset = interp(CS.out.vEgo, [0.0, 2.3, MIN_ACC_SPEED + PEDAL_TRANSITION], [-.4, 0.0, 0.2])
       pedal_command = PEDAL_SCALE * (actuators.accel + pedal_offset)
       interceptor_gas_cmd = clip(pedal_command, 0., MAX_INTERCEPTOR_GAS)
+      boost = 0
     else:
       interceptor_gas_cmd = 0.
-    pcm_accel_cmd = clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+      start_boost = interp(CS.out.vEgo, [0, 2.3, 4.6], [.6, .6, 0])
+      is_accelerating = interp(actuators.accel, [0, .2], [0, 1])
+      boost = start_boost * is_accelerating
+    pcm_accel_cmd = clip(actuators.accel + boost, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
